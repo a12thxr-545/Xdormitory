@@ -1,0 +1,20 @@
+services:
+  # 1. เว็บแอปพลิเคชันจองหอพัก (Next.js Application)
+  xdormitory:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: xdormitory_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_PATH=/app/data/dormitory.db
+      - JWT_SECRET=xdormitory_super_secret_jwt_key_2026
+      - NEXT_PUBLIC_APP_NAME=XDormitory
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    volumes:
+      # เชื่อมโยงฐานข้อมูล SQLite เก็บไว้ในโฟลเดอร์ data ของเครื่องจริง ไม่สูญหาย
+      - ./data:/app/data

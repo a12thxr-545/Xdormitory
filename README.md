@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# XDormitory - ระบบจองหอพักออนไลน์ (Dormitory Booking System)
 
-## Getting Started
+ระบบเว็บแอปพลิเคชันจองหอพักออนไลน์ตามมาตรฐาน Architecture Flowchart Diagram พัฒนาด้วย Next.js (App Router), TypeScript, Tailwind CSS, และ SQLite
 
-First, run the development server:
+---
+
+## 🌟 ฟังก์ชันการทำงานหลัก
+
+* **ฝั่งผู้เช่า (User Portal - `/user`)**:
+  * ค้นหาหอพักตามชื่อ ทำเล และช่วงราคา
+  * ตรวจสอบห้องว่างและดูรายละเอียดสิ่งอำนวยความสะดวก
+  * ระบบจองห้องพักแบบเรียลไทม์ พร้อม **Prevent Double Booking Lock** ป้องกันการจองซ้ำ
+  * ตรวจสอบประวัติการจองของตนเอง
+  * แก้ไขข้อมูลส่วนตัว
+* **ฝั่งเจ้าของหอพัก / ผู้ดูแล (Admin Portal - `/admin`)**:
+  * เพิ่ม แก้ไข ลบ ข้อมูลหอพักและห้องพัก
+  * ปรับเปลี่ยนสถานะห้องพัก (Available / Booked / Maintenance) ใน 1-คลิก
+  * ตรวจสอบ อนุมัติ หรือยกเลิกการจอง (ห้องพักจะถูกปลดล็อคกลับเป็นห้องว่างอัตโนมัติ)
+  * ค้นหารายการจองด้วย Booking ID หรือชื่อผู้เข้าพัก
+  * **ระบบจัดการฐานข้อมูลหลังบ้าน (Database Manager)**: ตรวจสอบสถิติ, ดูข้อมูลตาราง, สำรองข้อมูล (Export JSON Backup), แต่งตั้งสิทธิ์ Admin, และรีเซ็ตข้อมูลเริ่มต้น (Reset Seed Data)
+* **ระบบความปลอดภัยและการแยก Role**:
+  * หน้า Login (`/login`) และ Register (`/register`) มีไว้สำหรับผู้เช่าเท่านั้น
+  * สิทธิ์ Admin ต้องได้รับการแต่งตั้งจากระบบหลังบ้านเท่านั้น
+  * มีระบบ Role Guard ป้องกันไม่ให้ผู้เช่าเข้าถึงหน้า Admin (`Access Denied`)
+
+---
+
+## 🚀 วิธีการติดตั้งและเปิดใช้งาน
+
+### วิธีที่ 1: รันโดยตรงในเครื่อง (แนะนำสำหรับพัฒนา - ไม่ต้องใช้ Docker)
+
+**ความต้องการของระบบ**: Node.js v18 ขึ้นไป
 
 ```bash
+# 1. ติดตั้ง Dependencies
+npm install
+
+# 2. เริ่มต้นระบบเซิร์ฟเวอร์
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+เปิดเบราว์เซอร์ไปที่: **http://localhost:3000**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### วิธีที่ 2: รันผ่าน Docker (สำหรับ Deploy หรือรันแบบ Container)
 
-## Learn More
+**ความต้องการของระบบ**: ติดตั้ง Docker Desktop
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# 1. สั่งสร้าง Image และเปิดใช้งาน Container ในเบื้องหลัง
+docker compose up --build -d
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 2. ดู Log การทำงานของระบบ
+docker compose logs -f
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 3. หยุดการทำงานของ Container
+docker compose down
+```
 
-## Deploy on Vercel
+> **หมายเหตุเรื่องฐานข้อมูลใน Docker**: โฟลเดอร์ `./data` ของเครื่องคุณจะถูกเชื่อมต่อเข้ากับ `/app/data` ใน Container โดยอัตโนมัติ ทำให้ข้อมูลการจองและหอพักทั้งหมดจะไม่สูญหายแม้จะ Restart หรือปิด Docker
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔑 บัญชีตัวอย่างสำหรับทดสอบระบบ (Default Seed Accounts)
+
+* **บัญชีผู้เช่า / นักศึกษา (User)**:
+  * อีเมล: `user@xdormitory.com`
+  * รหัสผ่าน: `password123`
+* **บัญชีเจ้าของหอพัก / ผู้ดูแล (Admin)**:
+  * อีเมล: `admin@xdormitory.com`
+  * รหัสผ่าน: `adminpassword`
+
+---
+
+## ⚙️ โครงสร้างไฟล์สภาพแวดล้อม (.env)
+
+```env
+PORT=3000
+NODE_ENV=development
+DATABASE_PATH=./data/dormitory.db
+JWT_SECRET=xdormitory_super_secret_jwt_key_2026
+NEXT_PUBLIC_APP_NAME=XDormitory
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
