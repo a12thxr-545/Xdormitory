@@ -1,5 +1,7 @@
 import { getDb } from '@/server/db';
 import { Booking } from '@/types';
+import { notifyDataChange } from '@/server/events';
+
 
 export class BookingService {
   static getBookings(userId?: string, dormitoryId?: string, query?: string): Booking[] {
@@ -149,6 +151,7 @@ export class BookingService {
     });
 
     const bookingId = tx();
+    notifyDataChange('booking_created', { bookingId, roomId, dormitoryId });
     return this.getBookingById(bookingId)!;
   }
 
@@ -177,6 +180,60 @@ export class BookingService {
     });
 
     tx();
+    notifyDataChange('booking_updated', { id, status, roomId: booking.roomId, dormitoryId: booking.dormitoryId });
     return this.getBookingById(id)!;
   }
+
+  static cancelBookingByUser(id: string, cancelReason?: string): void {
+    const db = getDb();
+    const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(id) as any;
+    if (!booking) throw new Error('ไม่พบข้อมูลการจอง');
+
+    if (booking.status === 'confirmed') {
+      throw new Error('ไม่สามารถยกเลิกการจองได้ เนื่องจากรายการจองได้รับการอนุมัติจากผู้ดูแลหอพักแล้ว');
+    }
+
+    if (booking.status === 'cancelled') {
+      throw new Error('รายการจองนี้ถูกยกเลิกไปแล้ว');
+    }
+
+    const createdTime = new Date(booking.createdAt).getTime();
+    const nowTime = Date.now();
+    const hoursPassed = (nowTime - createdTime) / (1000 * 60 * 60);
+
+    if (hoursPassed > 24) {
+      throw new Error('ไม่สามารถยกเลิกการจองได้ เนื่องจากเกินกำหนด 24 ชั่วโมงหลังจากการจอง');
+    }
+
+    // Completely delete the booking record so it disappears from Admin view and unlocks room
+    this.deleteBooking(id);
+  }
+
+
+
+  static deleteBooking(id: string): void {
+    const db = getDb();
+    const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(id) as any;
+    if (!booking) throw new Error('ไม่พบข้อมูลการจอง');
+
+    const tx = db.transaction(() => {
+      if (booking.status === 'pending' || booking.status === 'confirmed') {
+        const activeOtherBooking = db.prepare(`
+          SELECT id FROM bookings 
+          WHERE roomId = ? AND id != ? AND status IN ('pending', 'confirmed')
+        `).get(booking.roomId, id);
+
+        if (!activeOtherBooking) {
+          db.prepare("UPDATE rooms SET status = 'available' WHERE id = ?").run(booking.roomId);
+        }
+      }
+
+      db.prepare('DELETE FROM bookings WHERE id = ?').run(id);
+    });
+
+    tx();
+    notifyDataChange('booking_deleted', { id, roomId: booking.roomId, dormitoryId: booking.dormitoryId });
+  }
+
 }
+

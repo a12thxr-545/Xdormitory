@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dormitory, Room, Booking } from '@/types';
+import { useRealtimeSync, broadcastLocalEvent } from '@/hooks/useRealtimeSync';
+
 import {
   ShieldCheck,
   Building,
@@ -41,6 +43,9 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
   const [selectedDormitoryId, setSelectedDormitoryId] = useState<string>('all');
   const [bookingSearchQuery, setBookingSearchQuery] = useState('');
   const [bookingStatusFilter, setBookingStatusFilter] = useState<string>('all');
+  const [roomSearchQuery, setRoomSearchQuery] = useState('');
+  const [roomStatusFilter, setRoomStatusFilter] = useState<string>('all');
+
 
   // Modal states for CRUD
   const [isDormModalOpen, setIsDormModalOpen] = useState(false);
@@ -112,6 +117,14 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Real-time synchronization subscription
+  useRealtimeSync((event) => {
+    if (event.type !== 'poll') {
+      fetchData();
+    }
+  });
+
 
   // -------------------------------------------------------------
   // DORMITORY CRUD
@@ -331,6 +344,26 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
     }
   };
 
+  const handleDeleteBooking = async (bookingId: string) => {
+    if (!confirm(`คุณต้องการลบรายการจอง ID: ${bookingId} ใช่หรือไม่?`)) return;
+
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ลบรายการจองไม่สำเร็จ');
+
+      showMsg('success', data.message || 'ลบรายการจองเรียบร้อยแล้ว');
+      fetchData();
+      onRefreshAll();
+    } catch (err: any) {
+      showMsg('error', err.message);
+    }
+  };
+
+
   // Filtered Bookings for the Booking List
   const filteredBookings = bookings.filter((b) => {
     // 1. Select Dormitory filter
@@ -356,24 +389,45 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
     return true;
   });
 
-  // Filtered Rooms
+  // Filtered Rooms by selected dormitory, status, and search query
   const filteredRooms = rooms.filter((r) => {
+    // 1. Filter by Dormitory ID
     if (selectedDormitoryId !== 'all' && r.dormitoryId !== selectedDormitoryId) {
       return false;
     }
+
+    // 2. Filter by Room Status
+    if (roomStatusFilter !== 'all' && r.status !== roomStatusFilter) {
+      return false;
+    }
+
+    // 3. Search by Room Number or Room Type
+    if (roomSearchQuery) {
+      const q = roomSearchQuery.toLowerCase();
+      const matchNum = r.roomNumber.toLowerCase().includes(q);
+      const matchType = r.roomType.toLowerCase().includes(q);
+      if (!matchNum && !matchType) return false;
+    }
+
     return true;
   });
 
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       
       {/* Top Banner */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-1">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-1">
             <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
             <span>ระบบผู้ดูแลหอพัก (Admin Panel)</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Realtime Active
+            </span>
           </div>
+
           <h1 className="text-xl font-bold text-slate-900">
             จัดการหอพักและรายการจอง
           </h1>
@@ -545,7 +599,7 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
             </div>
           </div>
 
-          {/* Bookings Table / Cards */}
+          {/* Bookings List: Mobile Card View (< md) & Desktop Table View (>= md) */}
           {filteredBookings.length === 0 ? (
             <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-2">
               <CalendarCheck className="w-10 h-10 text-slate-400 mx-auto" />
@@ -555,120 +609,224 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200/80 uppercase tracking-wider">
-                    <tr>
-                      <th className="px-5 py-3.5">Booking ID</th>
-                      <th className="px-5 py-3.5">หอพัก & เลขห้อง</th>
-                      <th className="px-5 py-3.5">ข้อมูลผู้เข้าพัก</th>
-                      <th className="px-5 py-3.5">วันที่เข้าพัก</th>
-                      <th className="px-5 py-3.5">สถานะ</th>
-                      <th className="px-5 py-3.5 text-right">ดำเนินการ (Actions)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-normal">
-                    {filteredBookings.map((b) => (
-                      <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
-                        {/* Booking ID */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                            {b.id}
-                          </span>
-                          <span className="block text-[10px] text-slate-400 mt-1">
-                            {new Date(b.createdAt).toLocaleDateString('th-TH')}
-                          </span>
-                        </td>
+            <>
+              {/* Mobile Card List View (< md) */}
+              <div className="block md:hidden space-y-3">
+                {filteredBookings.map((b) => (
+                  <div key={b.id} className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200">
+                          {b.id}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(b.createdAt).toLocaleDateString('th-TH')}
+                        </span>
+                      </div>
 
-                        {/* Dorm & Room */}
-                        <td className="px-5 py-4">
-                          <span className="font-semibold text-slate-900 block line-clamp-1">
-                            {b.dormitoryName}
+                      <div>
+                        {b.status === 'confirmed' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-900 text-white shadow-2xs">
+                            <CheckCircle className="w-3 h-3 text-white" />
+                            ยืนยันแล้ว
                           </span>
-                          <span className="text-slate-600 font-medium">
-                            ห้อง {b.roomNumber} (ชั้น {b.floor || '-'})
+                        )}
+                        {b.status === 'pending' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-300">
+                            <Clock className="w-3 h-3 text-slate-600" />
+                            รออนุมัติ
                           </span>
-                        </td>
+                        )}
+                        {b.status === 'cancelled' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-600">
+                            <XCircle className="w-3 h-3 text-slate-500" />
+                            ยกเลิกแล้ว
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-                        {/* Guest details */}
-                        <td className="px-5 py-4">
-                          <span className="font-semibold text-slate-800 block">
-                            {b.guestName}
-                          </span>
-                          <span className="text-slate-500 block">
-                            {b.guestPhone}
-                          </span>
-                          {b.guestEmail && (
-                            <span className="text-slate-400 block text-[11px]">
-                              {b.guestEmail}
-                            </span>
-                          )}
-                        </td>
+                    <div className="text-xs space-y-1.5">
+                      <div>
+                        <span className="font-bold text-slate-900 text-sm block">{b.dormitoryName}</span>
+                        <span className="text-slate-600 font-medium">ห้อง {b.roomNumber} (ชั้น {b.floor || '-'})</span>
+                      </div>
 
-                        {/* Check-in */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          <span className="font-medium text-slate-800 block">
-                            {b.checkInDate}
-                          </span>
-                          <span className="text-slate-500 text-[11px]">
-                            สัญญา {b.stayDurationMonths} เดือน
-                          </span>
-                        </td>
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                        <div className="text-slate-800">
+                          <strong className="text-slate-900">ผู้เข้าพัก:</strong> {b.guestName} ({b.guestPhone})
+                        </div>
+                        {b.guestEmail && (
+                          <div className="text-slate-500 text-[11px] truncate">
+                            Email: {b.guestEmail}
+                          </div>
+                        )}
+                        <div className="text-slate-600 text-[11px]">
+                          วันเข้าพัก: <strong>{b.checkInDate}</strong> (สัญญา {b.stayDurationMonths} เดือน)
+                        </div>
+                      </div>
+                    </div>
 
-                        {/* Status */}
-                        <td className="px-5 py-4 whitespace-nowrap">
-                          {b.status === 'confirmed' && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-xs bg-slate-900 text-white shadow-2xs">
-                              <CheckCircle className="w-3 h-3 text-white" />
-                              ยืนยันแล้ว
-                            </span>
-                          )}
-                          {b.status === 'pending' && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-xs bg-slate-100 text-slate-800 border border-slate-300">
-                              <Clock className="w-3 h-3 text-slate-600" />
-                              รออนุมัติ
-                            </span>
-                          )}
-                          {b.status === 'cancelled' && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-xs bg-slate-200 text-slate-600 border border-slate-300">
-                              <XCircle className="w-3 h-3 text-slate-500" />
-                              ยกเลิกแล้ว
-                            </span>
-                          )}
-                        </td>
+                    {/* Action buttons on Mobile */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-1.5 flex-wrap">
+                      {b.status !== 'confirmed' && (
+                        <button
+                          onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')}
+                          className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1 text-xs"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>ยืนยัน</span>
+                        </button>
+                      )}
 
-                        {/* Action buttons (Confirm or Cancel) */}
-                        <td className="px-5 py-4 whitespace-nowrap text-right space-x-1.5">
-                          {b.status !== 'confirmed' && (
-                            <button
-                              onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')}
-                              title="อนุมัติและยืนยันการจอง"
-                              className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1 text-xs"
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                              <span>ยืนยัน</span>
-                            </button>
-                          )}
+                      {b.status !== 'cancelled' && (
+                        <button
+                          onClick={() => handleUpdateBookingStatus(b.id, 'cancelled')}
+                          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium border border-slate-200 transition-all cursor-pointer inline-flex items-center gap-1 text-xs"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>ยกเลิก</span>
+                        </button>
+                      )}
 
-                          {b.status !== 'cancelled' && (
-                            <button
-                              onClick={() => handleUpdateBookingStatus(b.id, 'cancelled')}
-                              title="ยกเลิกการจองและปล่อยห้องว่าง"
-                              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium border border-slate-200 transition-all cursor-pointer inline-flex items-center gap-1 text-xs"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                              <span>ยกเลิก</span>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      <button
+                        onClick={() => handleDeleteBooking(b.id)}
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-red-50 text-red-600 hover:text-red-700 font-medium border border-slate-200 hover:border-red-200 transition-all cursor-pointer inline-flex items-center gap-1 text-xs"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>ลบ</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+
+              {/* Desktop Table View (>= md) */}
+              <div className="hidden md:block bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200/80 uppercase tracking-wider">
+                      <tr>
+                        <th className="px-5 py-3.5">Booking ID</th>
+                        <th className="px-5 py-3.5">หอพัก & เลขห้อง</th>
+                        <th className="px-5 py-3.5">ข้อมูลผู้เข้าพัก</th>
+                        <th className="px-5 py-3.5">วันที่เข้าพัก</th>
+                        <th className="px-5 py-3.5">สถานะ</th>
+                        <th className="px-5 py-3.5 text-right">ดำเนินการ (Actions)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-normal">
+                      {filteredBookings.map((b) => (
+                        <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
+                          {/* Booking ID */}
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                              {b.id}
+                            </span>
+                            <span className="block text-[10px] text-slate-400 mt-1">
+                              {new Date(b.createdAt).toLocaleDateString('th-TH')}
+                            </span>
+                          </td>
+
+                          {/* Dorm & Room */}
+                          <td className="px-5 py-4">
+                            <span className="font-semibold text-slate-900 block line-clamp-1">
+                              {b.dormitoryName}
+                            </span>
+                            <span className="text-slate-600 font-medium">
+                              ห้อง {b.roomNumber} (ชั้น {b.floor || '-'})
+                            </span>
+                          </td>
+
+                          {/* Guest details */}
+                          <td className="px-5 py-4">
+                            <span className="font-semibold text-slate-800 block">
+                              {b.guestName}
+                            </span>
+                            <span className="text-slate-500 block">
+                              {b.guestPhone}
+                            </span>
+                            {b.guestEmail && (
+                              <span className="text-slate-400 block text-[11px]">
+                                {b.guestEmail}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Check-in */}
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            <span className="font-medium text-slate-800 block">
+                              {b.checkInDate}
+                            </span>
+                            <span className="text-slate-500 text-[11px]">
+                              สัญญา {b.stayDurationMonths} เดือน
+                            </span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-5 py-4 whitespace-nowrap">
+                            {b.status === 'confirmed' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-xs bg-slate-900 text-white shadow-2xs">
+                                <CheckCircle className="w-3 h-3 text-white" />
+                                ยืนยันแล้ว
+                              </span>
+                            )}
+                            {b.status === 'pending' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-xs bg-slate-100 text-slate-800 border border-slate-300">
+                                <Clock className="w-3 h-3 text-slate-600" />
+                                รออนุมัติ
+                              </span>
+                            )}
+                            {b.status === 'cancelled' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium text-xs bg-slate-200 text-slate-600 border border-slate-300">
+                                <XCircle className="w-3 h-3 text-slate-500" />
+                                ยกเลิกแล้ว
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Action buttons */}
+                          <td className="px-5 py-4 whitespace-nowrap text-right space-x-1.5">
+                            {b.status !== 'confirmed' && (
+                              <button
+                                onClick={() => handleUpdateBookingStatus(b.id, 'confirmed')}
+                                title="อนุมัติและยืนยันการจอง"
+                                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1 text-xs"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>ยืนยัน</span>
+                              </button>
+                            )}
+
+                            {b.status !== 'cancelled' && (
+                              <button
+                                onClick={() => handleUpdateBookingStatus(b.id, 'cancelled')}
+                                title="ยกเลิกการจองและปล่อยห้องว่าง"
+                                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium border border-slate-200 transition-all cursor-pointer inline-flex items-center gap-1 text-xs"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>ยกเลิก</span>
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => handleDeleteBooking(b.id)}
+                              title="ลบรายการจองนี้ออกจากระบบ"
+                              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-red-50 text-red-600 hover:text-red-700 font-medium border border-slate-200 hover:border-red-200 transition-all cursor-pointer inline-flex items-center gap-1 text-xs"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>ลบ</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
+
 
         </div>
       )}
@@ -678,20 +836,108 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
       {/* ========================================================================= */}
       {activeSubTab === 'rooms' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900">
-              รายการห้องพัก ({filteredRooms.length} ห้อง)
-            </h2>
+          
+          {/* Dormitory Filter Bar & Search */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-3 items-center justify-between">
+            
+            {/* Dormitory Quick Filter Buttons */}
+            <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto text-xs pb-1 md:pb-0">
+              <span className="text-slate-500 font-semibold whitespace-nowrap mr-1 flex items-center gap-1">
+                <Building className="w-3.5 h-3.5 text-slate-400" />
+                เลือกหอพัก:
+              </span>
+
+              <button
+                onClick={() => setSelectedDormitoryId('all')}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  selectedDormitoryId === 'all'
+                    ? 'bg-slate-900 text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                ทั้งหมด ({rooms.length})
+              </button>
+
+              {dormitories.map((d) => {
+                const count = rooms.filter((r) => r.dormitoryId === d.id).length;
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => setSelectedDormitoryId(d.id)}
+                    className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                      selectedDormitoryId === d.id
+                        ? 'bg-slate-900 text-white shadow-2xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {d.name} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Room Search & Status Filters */}
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative flex-1 md:w-56">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="ค้นหาเลขห้อง/ประเภท..."
+                  value={roomSearchQuery}
+                  onChange={(e) => setRoomSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
+                />
+              </div>
+
+              <select
+                value={roomStatusFilter}
+                onChange={(e) => setRoomStatusFilter(e.target.value)}
+                className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-hidden"
+              >
+                <option value="all">สถานะทั้งหมด</option>
+                <option value="available">ว่าง (Available)</option>
+                <option value="booked">จองแล้ว (Booked)</option>
+                <option value="maintenance">ปิดปรับปรุง</option>
+              </select>
+            </div>
+
+          </div>
+
+          {/* Header & Add Button */}
+          <div className="flex items-center justify-between pt-1">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                {selectedDormitoryId === 'all'
+                  ? `ห้องพักทั้งหมดทุกหอพัก (${filteredRooms.length} ห้อง)`
+                  : `ห้องพักของ "${dormitories.find((d) => d.id === selectedDormitoryId)?.name}" (${filteredRooms.length} ห้อง)`}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {selectedDormitoryId === 'all'
+                  ? 'แสดงห้องพักจากหอพักทั้งหมดในระบบ'
+                  : `กำลังกรองแสดงเฉพาะห้องพักของหอพักนี้เท่านั้น`}
+              </p>
+            </div>
+
             <button
               onClick={handleOpenAddRoom}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>เพิ่มห้องพัก (Add Room)</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRooms.length === 0 ? (
+            <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-2">
+              <BedDouble className="w-10 h-10 text-slate-400 mx-auto" />
+              <h3 className="font-bold text-slate-700">ไม่พบห้องพักตามเงื่อนไขที่เลือก</h3>
+              <p className="text-xs text-slate-500">
+                ลองเปลี่ยนหอพักที่เลือก หรือเปลี่ยนตัวกรองสถานะเป็น &quot;สถานะทั้งหมด&quot;
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
             {filteredRooms.map((room) => {
               const dormName = dormitories.find((d) => d.id === room.dormitoryId)?.name || room.dormitoryName;
 
@@ -809,8 +1055,10 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
+
 
       {/* ========================================================================= */}
       {/* TAB 3: DORMITORIES MANAGEMENT (ADD / EDIT / DELETE DORMITORY INFO) */}
@@ -830,7 +1078,7 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {dormitories.map((dorm) => (
               <div
                 key={dorm.id}

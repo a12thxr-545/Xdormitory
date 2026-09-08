@@ -34,14 +34,18 @@ import {
   Check,
   Info,
   Lock,
+  Menu,
 } from 'lucide-react';
 import { clearAppCache } from '@/lib/cacheUtils';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 export default function HomePage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [activeTab, setActiveTab] = useState<'explore' | 'history'>('explore');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
 
   // Search & Filters
   const [dormitories, setDormitories] = useState<Dormitory[]>([]);
@@ -129,6 +133,17 @@ export default function HomePage() {
     }
   }, [selectedDormitory]);
 
+  // Real-time synchronization for users
+  useRealtimeSync((event) => {
+    if (event.type !== 'poll') {
+      fetchDormitories();
+      if (selectedDormitory) {
+        fetchDormitoryRooms(selectedDormitory.id);
+      }
+    }
+  });
+
+
   const handleLogout = () => {
     localStorage.removeItem('xdorm_user');
     setCurrentUser(null);
@@ -154,7 +169,7 @@ export default function HomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col overflow-x-hidden w-full max-w-full">
       
       {/* NAVBAR */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
@@ -223,7 +238,7 @@ export default function HomePage() {
               )}
             </nav>
 
-            {/* Right Action: User Menu or Login/Register Buttons */}
+            {/* Right Action: Desktop User Buttons & Mobile Hamburger Button */}
             <div className="flex items-center gap-2 sm:gap-3">
               
               {/* Clear Cache Button */}
@@ -233,20 +248,20 @@ export default function HomePage() {
                   alert(res.message);
                   window.location.reload();
                 }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 text-xs font-medium transition-colors cursor-pointer"
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 text-xs font-medium transition-colors cursor-pointer"
                 title="ล้างแคชระบบ (Clear Cache)"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden sm:inline">ล้างแคช</span>
+                <span>ล้างแคช</span>
               </button>
 
               {authChecked && currentUser ? (
-                // LOGGED IN USER STATE
-                <div className="flex items-center gap-2">
+                // LOGGED IN USER STATE (Desktop)
+                <div className="hidden md:flex items-center gap-2">
                   {currentUser.role === 'admin' && (
                     <Link
                       href="/admin"
-                      className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors shadow-2xs"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors shadow-2xs"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" />
                       <span>Admin Portal</span>
@@ -261,7 +276,7 @@ export default function HomePage() {
                     <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs">
                       {currentUser.role === 'admin' ? 'A' : 'U'}
                     </div>
-                    <span className="hidden md:inline max-w-[120px] truncate">
+                    <span className="max-w-[120px] truncate">
                       {currentUser.name}
                     </span>
                     <Edit3 className="w-3.5 h-3.5 text-slate-400" />
@@ -276,8 +291,8 @@ export default function HomePage() {
                   </button>
                 </div>
               ) : (
-                // GUEST (NOT LOGGED IN) STATE
-                <div className="flex items-center gap-2">
+                // GUEST (NOT LOGGED IN) STATE (Desktop)
+                <div className="hidden md:flex items-center gap-2">
                   <Link
                     href="/login"
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors"
@@ -296,43 +311,149 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* Hamburger Burger Menu Button (Mobile < md) */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden flex items-center justify-center p-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                aria-label="Toggle Burger Menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-5 h-5 text-slate-900" />
+                ) : (
+                  <Menu className="w-5 h-5 text-slate-900" />
+                )}
+              </button>
+
             </div>
 
           </div>
         </div>
 
-        {/* Mobile Navigation Bar */}
-        <div className="flex md:hidden items-center justify-around py-2 border-t border-slate-100 text-xs font-medium bg-white">
-          <button
-            onClick={() => {
-              setSelectedDormitory(null);
-              setActiveTab('explore');
-            }}
-            className={`flex items-center gap-1.5 py-1 px-3 rounded-lg ${
-              activeTab === 'explore' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600'
-            }`}
-          >
-            <Home className="w-3.5 h-3.5" /> ค้นหาหอพัก
-          </button>
-          {currentUser && (
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-1.5 py-1 px-3 rounded-lg ${
-                activeTab === 'history' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600'
-              }`}
-            >
-              <CalendarCheck className="w-3.5 h-3.5" /> ประวัติการจอง
-            </button>
-          )}
-          {currentUser?.role === 'admin' && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 py-1 px-3 rounded-lg text-slate-600"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" /> แอดมิน
-            </Link>
-          )}
-        </div>
+        {/* Mobile Hamburger Burger Menu Drawer (< md) */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-slate-200/90 px-4 pt-3 pb-5 space-y-3 shadow-lg animate-in slide-in-from-top-2">
+            
+            {/* Menu Items */}
+            <div className="space-y-1">
+              <button
+                onClick={() => {
+                  setSelectedDormitory(null);
+                  setActiveTab('explore');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                  activeTab === 'explore'
+                    ? 'bg-slate-900 text-white shadow-2xs'
+                    : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <Home className="w-4 h-4" />
+                <span>ค้นหาหอพัก</span>
+              </button>
+
+              {currentUser && (
+                <button
+                  onClick={() => {
+                    setActiveTab('history');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    activeTab === 'history'
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  <span>ประวัติการจองของฉัน</span>
+                </button>
+              )}
+
+              {currentUser?.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200"
+                >
+                  <ShieldCheck className="w-4 h-4 text-slate-700" />
+                  <span>Admin Portal (ระบบผู้ดูแล)</span>
+                </Link>
+              )}
+            </div>
+
+            {/* Account & Action Controls in Burger Menu */}
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              {authChecked && currentUser ? (
+                <>
+                  <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+                        {currentUser.role === 'admin' ? 'A' : 'U'}
+                      </div>
+                      <div className="text-xs">
+                        <span className="font-bold text-slate-900 block">{currentUser.name}</span>
+                        <span className="text-[10px] text-slate-500">{currentUser.email}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsProfileModalOpen(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs hover:bg-slate-100 font-medium"
+                    >
+                      แก้ไขโปรไฟล์
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors border border-slate-200"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>ออกจากระบบ</span>
+                  </button>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>เข้าสู่ระบบ</span>
+                  </Link>
+
+                  <Link
+                    href="/register"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 shadow-2xs"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>สมัครสมาชิก</span>
+                  </Link>
+                </div>
+              )}
+
+              <button
+                onClick={async () => {
+                  const res = await clearAppCache();
+                  alert(res.message);
+                  window.location.reload();
+                }}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-200 text-xs font-medium"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                <span>ล้างแคชระบบ (Clear Cache)</span>
+              </button>
+            </div>
+
+          </div>
+        )}
+
       </header>
 
       {/* Main Container */}
@@ -478,7 +599,7 @@ export default function HomePage() {
                 ไม่พบหอพักตามเงื่อนไขที่ค้นหา
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filteredDormitories.map((dorm) => (
                   <DormitoryCard
                     key={dorm.id}
@@ -571,7 +692,7 @@ export default function HomePage() {
                 ไม่พบห้องพักที่ตรงตามเงื่อนไข
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredRooms.map((room) => {
                   const isAvailable = room.status === 'available';
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RoomService } from '@/server/services/roomService';
+import { notifyDataChange } from '@/server/events';
 
 export async function PATCH(
   request: NextRequest,
@@ -15,8 +16,10 @@ export async function PATCH(
     }
 
     RoomService.updateRoomStatus(id, status);
+    notifyDataChange('room_updated', { roomId: id, status });
 
     return NextResponse.json({
+
       message: `เปลี่ยนสถานะห้องพักเป็น "${status === 'available' ? 'ว่าง (Available)' : status === 'booked' ? 'จองแล้ว (Booked)' : 'ปิดปรับปรุง (Maintenance)'}" เรียบร้อยแล้ว`,
       status,
     });

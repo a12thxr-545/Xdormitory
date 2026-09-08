@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DormitoryService } from '@/server/services/dormitoryService';
+import { notifyDataChange } from '@/server/events';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,8 +20,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const newDorm = DormitoryService.createDormitory(body);
+    notifyDataChange('dormitory_updated', { dormitory: newDorm });
     return NextResponse.json({ message: 'เพิ่มข้อมูลหอพักสำเร็จ', dormitory: newDorm }, { status: 201 });
   } catch (error: any) {
+
     console.error('Error in POST /api/dormitories:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 400 });
   }

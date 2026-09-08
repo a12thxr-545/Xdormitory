@@ -24,6 +24,8 @@ import {
   Check,
 } from 'lucide-react';
 import { clearAppCache } from '@/lib/cacheUtils';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+
 
 interface DatabaseStats {
   dbPath: string;
@@ -130,6 +132,14 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
     fetchStats();
     fetchTableRows(activeTable);
   }, []);
+
+  useRealtimeSync((event) => {
+    if (event.type !== 'poll') {
+      fetchStats();
+      fetchTableRows(activeTable);
+    }
+  });
+
 
   const handleSwitchTable = (table: 'users' | 'dormitories' | 'rooms' | 'bookings') => {
     setActiveTable(table);
@@ -274,7 +284,7 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       
       {/* Action Notification Toast */}
       {actionMsg && (
@@ -295,14 +305,14 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
       )}
 
       {/* Database Overview Cards */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Database className="w-4.5 h-4.5" />
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-2xs space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+              <Database className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-slate-900">
                   ระบบจัดการฐานข้อมูลหลังบ้าน (Database & Backoffice)
                 </h2>
@@ -310,29 +320,29 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
                   SQLite ACID Active
                 </span>
               </div>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <p className="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <p className="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200 truncate max-w-[200px] sm:max-w-xs md:max-w-none" title={stats?.dbPath || './data/dormitory.db'}>
                   {stats?.dbPath || './data/dormitory.db'}
                 </p>
                 <button
                   type="button"
                   onClick={() => handleCopyPath(stats?.dbPath || './data/dormitory.db')}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded transition-colors cursor-pointer border border-slate-200"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded transition-colors cursor-pointer border border-slate-200 shrink-0"
                   title="คัดลอก Path ไปวางใน TablePlus"
                 >
                   {copiedPath ? <Check className="w-3 h-3 text-slate-900" /> : <Copy className="w-3 h-3" />}
                   <span>{copiedPath ? 'คัดลอกแล้ว' : 'คัดลอก Path'}</span>
                 </button>
-                <span className="text-[11px] text-slate-400">({stats?.fileSizeKb || 0} KB)</span>
+                <span className="text-[11px] text-slate-400 shrink-0">({stats?.fileSizeKb || 0} KB)</span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
             <button
               onClick={handleOpenTablePlus}
               disabled={openingTablePlus}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium shadow-2xs transition-all cursor-pointer disabled:opacity-50"
               title="เปิดไฟล์ฐานข้อมูลในโปรแกรม TablePlus ทันที"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -346,7 +356,7 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
                 fetchStats();
                 fetchTableRows(activeTable);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium transition-all cursor-pointer"
               title="ล้างแคชระบบและรีเฟรชฐานข้อมูล"
             >
               <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
@@ -355,7 +365,7 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
 
             <button
               onClick={handleExportBackup}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-medium transition-all cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-slate-400" />
               <span>สำรองข้อมูล (JSON)</span>
@@ -437,12 +447,12 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
           </div>
 
           {/* Table Switcher Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium overflow-x-auto">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium overflow-x-auto max-w-full">
             {(['users', 'dormitories', 'rooms', 'bookings'] as const).map((tbl) => (
               <button
                 key={tbl}
                 onClick={() => handleSwitchTable(tbl)}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer uppercase ${
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer uppercase shrink-0 ${
                   activeTable === tbl
                     ? 'bg-white text-slate-900 shadow-2xs font-semibold'
                     : 'text-slate-600 hover:text-slate-900'
@@ -465,102 +475,195 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
             ไม่มีข้อมูลในตารางนี้
           </div>
         ) : (
-          <div className="overflow-x-auto max-h-96 overflow-y-auto">
-            <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-slate-100 text-slate-700 font-bold uppercase sticky top-0 border-b border-slate-200">
-                <tr>
-                  <th className="px-4 py-2.5 whitespace-nowrap text-slate-700">
-                    จัดการ (Actions)
-                  </th>
-                  {Object.keys(tableRows[0] || {}).map((col) => (
-                    <th key={col} className="px-4 py-2.5 whitespace-nowrap text-slate-600 font-semibold">
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-normal">
-                {tableRows.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Action Column with Direct Edit Button */}
-                    <td className="px-4 py-2 whitespace-nowrap space-x-1.5">
+          <div>
+            {/* MOBILE CARD VIEW (< md) */}
+            <div className="block md:hidden divide-y divide-slate-100 p-3 space-y-3">
+              {tableRows.map((row, idx) => (
+                <div key={idx} className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-bold text-slate-900 truncate">
+                      ID: {row.id}
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => handleOpenEditRow(row)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-sans font-medium transition-colors cursor-pointer"
-                        title="คลิกเพื่อแก้ไขข้อมูลแถวนี้"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer shadow-2xs"
                       >
                         <Edit className="w-3 h-3" />
                         <span>แก้ไข</span>
                       </button>
 
-                      {/* Quick 1-Click Role Toggle for Users */}
                       {activeTable === 'users' && (
                         row.role === 'admin' ? (
                           <button
                             onClick={() => handleChangeUserRole(row.id, 'user')}
-                            className="px-2 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-[11px] font-sans font-medium transition-colors cursor-pointer"
-                            title="ลดสิทธิ์เป็นผู้เช่า"
+                            className="px-2 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
                           >
                             ลดสิทธิ์
                           </button>
                         ) : (
                           <button
                             onClick={() => handleChangeUserRole(row.id, 'admin')}
-                            className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-[11px] font-sans font-medium transition-colors cursor-pointer"
-                            title="แต่งตั้งเป็น Admin"
+                            className="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-medium transition-colors cursor-pointer"
                           >
-                            ตั้งเป็น Admin
+                            ตั้ง Admin
                           </button>
                         )
                       )}
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* Table Data Columns */}
-                    {Object.entries(row).map(([k, val]: [string, any], vIdx) => (
-                      <td key={vIdx} className="px-4 py-2 whitespace-nowrap max-w-xs truncate text-slate-700">
-                        {k === 'role' ? (
-                          <select
-                            value={val}
-                            onChange={(e) => handleQuickUpdateRow('users', row.id, { role: e.target.value })}
-                            className="px-2 py-0.5 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-800 font-sans cursor-pointer hover:border-slate-300 transition-colors"
-                            title="คลิกเพื่อเปลี่ยนสิทธิ์ทันที"
-                          >
-                            <option value="user">user (ผู้เช่า)</option>
-                            <option value="admin">admin (ผู้ดูแล)</option>
-                          </select>
-                        ) : k === 'status' && activeTable === 'rooms' ? (
-                          <select
-                            value={val}
-                            onChange={(e) => handleQuickUpdateRow('rooms', row.id, { status: e.target.value })}
-                            className="px-2 py-0.5 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-800 font-sans cursor-pointer hover:border-slate-300 transition-colors"
-                            title="คลิกเพื่อเปลี่ยนสถานะห้องพักทันที"
-                          >
-                            <option value="available">available (ว่าง)</option>
-                            <option value="booked">booked (จองแล้ว)</option>
-                            <option value="maintenance">maintenance (ปิดปรับปรุง)</option>
-                          </select>
-                        ) : k === 'status' && activeTable === 'bookings' ? (
-                          <select
-                            value={val}
-                            onChange={(e) => handleQuickUpdateRow('bookings', row.id, { status: e.target.value })}
-                            className="px-2 py-0.5 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-800 font-sans cursor-pointer hover:border-slate-300 transition-colors"
-                            title="คลิกเพื่อเปลี่ยนสถานะการจองทันที"
-                          >
-                            <option value="pending">pending (รออนุมัติ)</option>
-                            <option value="confirmed">confirmed (อนุมัติแล้ว)</option>
-                            <option value="cancelled">cancelled (ยกเลิกแล้ว)</option>
-                          </select>
-                        ) : typeof val === 'object' ? (
-                          JSON.stringify(val)
-                        ) : (
-                          String(val ?? '')
-                        )}
-                      </td>
+                  {/* Card fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono pt-1">
+                    {Object.entries(row).map(([k, val]: [string, any], vIdx) => {
+                      if (k === 'id') return null;
+                      return (
+                        <div key={vIdx} className="bg-white p-2 rounded-lg border border-slate-100">
+                          <span className="text-[10px] text-slate-400 uppercase font-sans font-semibold block">
+                            {k}
+                          </span>
+                          <div className="mt-0.5 truncate text-slate-800 font-medium">
+                            {k === 'role' ? (
+                              <select
+                                value={val}
+                                onChange={(e) => handleQuickUpdateRow('users', row.id, { role: e.target.value })}
+                                className="w-full px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-900 cursor-pointer"
+                              >
+                                <option value="user">user (ผู้เช่า)</option>
+                                <option value="admin">admin (ผู้ดูแล)</option>
+                              </select>
+                            ) : k === 'status' && activeTable === 'rooms' ? (
+                              <select
+                                value={val}
+                                onChange={(e) => handleQuickUpdateRow('rooms', row.id, { status: e.target.value })}
+                                className="w-full px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-900 cursor-pointer"
+                              >
+                                <option value="available">available (ว่าง)</option>
+                                <option value="booked">booked (จองแล้ว)</option>
+                                <option value="maintenance">maintenance (ปิดปรับปรุง)</option>
+                              </select>
+                            ) : k === 'status' && activeTable === 'bookings' ? (
+                              <select
+                                value={val}
+                                onChange={(e) => handleQuickUpdateRow('bookings', row.id, { status: e.target.value })}
+                                className="w-full px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-900 cursor-pointer"
+                              >
+                                <option value="pending">pending (รออนุมัติ)</option>
+                                <option value="confirmed">confirmed (อนุมัติแล้ว)</option>
+                                <option value="cancelled">cancelled (ยกเลิกแล้ว)</option>
+                              </select>
+                            ) : typeof val === 'object' ? (
+                              JSON.stringify(val)
+                            ) : (
+                              String(val ?? '-')
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (>= md) */}
+            <div className="hidden md:block overflow-x-auto max-h-96 overflow-y-auto">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-100 text-slate-700 font-bold uppercase sticky top-0 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-2.5 whitespace-nowrap text-slate-700">
+                      จัดการ (Actions)
+                    </th>
+                    {Object.keys(tableRows[0] || {}).map((col) => (
+                      <th key={col} className="px-4 py-2.5 whitespace-nowrap text-slate-600 font-semibold">
+                        {col}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-normal">
+                  {tableRows.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                      {/* Action Column with Direct Edit Button */}
+                      <td className="px-4 py-2 whitespace-nowrap space-x-1.5">
+                        <button
+                          onClick={() => handleOpenEditRow(row)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-sans font-medium transition-colors cursor-pointer"
+                          title="คลิกเพื่อแก้ไขข้อมูลแถวนี้"
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>แก้ไข</span>
+                        </button>
+
+                        {/* Quick 1-Click Role Toggle for Users */}
+                        {activeTable === 'users' && (
+                          row.role === 'admin' ? (
+                            <button
+                              onClick={() => handleChangeUserRole(row.id, 'user')}
+                              className="px-2 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-[11px] font-sans font-medium transition-colors cursor-pointer"
+                              title="ลดสิทธิ์เป็นผู้เช่า"
+                            >
+                              ลดสิทธิ์
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleChangeUserRole(row.id, 'admin')}
+                              className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-[11px] font-sans font-medium transition-colors cursor-pointer"
+                              title="แต่งตั้งเป็น Admin"
+                            >
+                              ตั้งเป็น Admin
+                            </button>
+                          )
+                        )}
+                      </td>
+
+                      {/* Table Data Columns */}
+                      {Object.entries(row).map(([k, val]: [string, any], vIdx) => (
+                        <td key={vIdx} className="px-4 py-2 whitespace-nowrap max-w-xs truncate text-slate-700">
+                          {k === 'role' ? (
+                            <select
+                              value={val}
+                              onChange={(e) => handleQuickUpdateRow('users', row.id, { role: e.target.value })}
+                              className="px-2 py-0.5 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-800 font-sans cursor-pointer hover:border-slate-300 transition-colors"
+                              title="คลิกเพื่อเปลี่ยนสิทธิ์ทันที"
+                            >
+                              <option value="user">user (ผู้เช่า)</option>
+                              <option value="admin">admin (ผู้ดูแล)</option>
+                            </select>
+                          ) : k === 'status' && activeTable === 'rooms' ? (
+                            <select
+                              value={val}
+                              onChange={(e) => handleQuickUpdateRow('rooms', row.id, { status: e.target.value })}
+                              className="px-2 py-0.5 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-800 font-sans cursor-pointer hover:border-slate-300 transition-colors"
+                              title="คลิกเพื่อเปลี่ยนสถานะห้องพักทันที"
+                            >
+                              <option value="available">available (ว่าง)</option>
+                              <option value="booked">booked (จองแล้ว)</option>
+                              <option value="maintenance">maintenance (ปิดปรับปรุง)</option>
+                            </select>
+                          ) : k === 'status' && activeTable === 'bookings' ? (
+                            <select
+                              value={val}
+                              onChange={(e) => handleQuickUpdateRow('bookings', row.id, { status: e.target.value })}
+                              className="px-2 py-0.5 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-800 font-sans cursor-pointer hover:border-slate-300 transition-colors"
+                              title="คลิกเพื่อเปลี่ยนสถานะการจองทันที"
+                            >
+                              <option value="pending">pending (รออนุมัติ)</option>
+                              <option value="confirmed">confirmed (อนุมัติแล้ว)</option>
+                              <option value="cancelled">cancelled (ยกเลิกแล้ว)</option>
+                            </select>
+                          ) : typeof val === 'object' ? (
+                            JSON.stringify(val)
+                          ) : (
+                            String(val ?? '')
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

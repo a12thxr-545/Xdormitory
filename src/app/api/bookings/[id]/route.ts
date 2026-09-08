@@ -27,20 +27,43 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { status, cancelReason } = body;
+    const { status, cancelReason, isUserCancel } = body;
 
     if (!['confirmed', 'cancelled', 'pending'].includes(status)) {
       return NextResponse.json({ error: 'สถานะการจองไม่ถูกต้อง' }, { status: 400 });
     }
 
-    const updatedBooking = BookingService.updateBookingStatus(id, status, cancelReason);
+    let updatedBooking = null;
+    if (isUserCancel) {
+      BookingService.cancelBookingByUser(id, cancelReason);
+    } else {
+      updatedBooking = BookingService.updateBookingStatus(id, status, cancelReason);
+    }
 
     return NextResponse.json({
-      message: `อัปเดตสถานะการจองเป็น "${status === 'confirmed' ? 'ยืนยันแล้ว' : status === 'cancelled' ? 'ยกเลิกแล้ว' : 'รอการยืนยัน'}" สำเร็จ`,
+      message: isUserCancel ? 'ยกเลิกรายการจองสำเร็จแล้ว (ลบออกจากระบบและปล่อยห้องว่างแล้ว)' : `อัปเดตสถานะการจองเป็น "${status === 'confirmed' ? 'ยืนยันแล้ว' : status === 'cancelled' ? 'ยกเลิกแล้ว' : 'รอการยืนยัน'}" สำเร็จ`,
       booking: updatedBooking,
     });
+
   } catch (error: any) {
     console.error('Error updating booking status:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 400 });
+  }
+}
+
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    BookingService.deleteBooking(id);
+
+    return NextResponse.json({ message: 'ลบรายการจองเรียบร้อยแล้ว' });
+  } catch (error: any) {
+    console.error('Error deleting booking:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+

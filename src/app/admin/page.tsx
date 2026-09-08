@@ -19,6 +19,7 @@ import {
   ArrowRight,
   ShieldAlert,
   RotateCcw,
+  Home,
 } from 'lucide-react';
 import { clearAppCache } from '@/lib/cacheUtils';
 
@@ -109,7 +110,7 @@ export default function AdminPortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col overflow-x-hidden w-full max-w-full">
       
       {/* ADMIN TOP NAVBAR */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
@@ -141,10 +142,10 @@ export default function AdminPortalPage() {
             </div>
 
             {/* Main Tabs (Operations vs Database Backoffice) */}
-            <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium">
+            <nav className="hidden sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-medium overflow-x-auto">
               <button
                 onClick={() => setActiveMainTab('operations')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                   activeMainTab === 'operations'
                     ? 'bg-white text-slate-900 shadow-2xs font-semibold'
                     : 'text-slate-600 hover:text-slate-900'
@@ -156,19 +157,29 @@ export default function AdminPortalPage() {
 
               <button
                 onClick={() => setActiveMainTab('database')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                   activeMainTab === 'database'
                     ? 'bg-white text-slate-900 shadow-2xs font-semibold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Database className="w-3.5 h-3.5" />
-                <span>จัดการฐานข้อมูลหลังบ้าน</span>
+                <span>ฐานข้อมูลหลังบ้าน</span>
               </button>
             </nav>
 
-            {/* Admin Profile, Clear Cache & Logout */}
-            <div className="flex items-center gap-2">
+
+            {/* Admin Profile, Home, Clear Cache & Logout */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors cursor-pointer border border-slate-200"
+                title="กลับไปยังหน้าหลัก (Home / User Portal)"
+              >
+                <Home className="w-3.5 h-3.5 text-slate-600" />
+                <span className="hidden sm:inline">หน้าหลัก</span>
+              </Link>
+
               <button
                 onClick={async () => {
                   const res = await clearAppCache();
@@ -179,7 +190,7 @@ export default function AdminPortalPage() {
                 title="ล้างแคชระบบ (Clear Cache)"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-                <span className="hidden sm:inline">ล้างแคช</span>
+                <span className="hidden md:inline">ล้างแคช</span>
               </button>
 
               <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 text-xs font-medium text-slate-700 border border-slate-200">
@@ -198,7 +209,28 @@ export default function AdminPortalPage() {
 
           </div>
         </div>
+
+        {/* Mobile Navigation Tabs (< sm) */}
+        <div className="flex sm:hidden items-center justify-around py-2 border-t border-slate-100 text-xs font-medium bg-white">
+          <button
+            onClick={() => setActiveMainTab('operations')}
+            className={`flex items-center gap-1.5 py-1 px-3 rounded-lg ${
+              activeMainTab === 'operations' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600'
+            }`}
+          >
+            <Building className="w-3.5 h-3.5" /> จัดการหอพัก & จอง
+          </button>
+          <button
+            onClick={() => setActiveMainTab('database')}
+            className={`flex items-center gap-1.5 py-1 px-3 rounded-lg ${
+              activeMainTab === 'database' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" /> ฐานข้อมูลหลังบ้าน
+          </button>
+        </div>
       </header>
+
 
       {/* Admin Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">

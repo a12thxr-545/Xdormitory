@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AdminDbService } from '@/server/services/adminDbService';
+import { notifyDataChange } from '@/server/events';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'reset') {
       const result = AdminDbService.resetDatabase();
+      notifyDataChange('db_reset');
       return NextResponse.json(result);
     }
 
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'ข้อมูลไม่ครบถ้วน (userId, role: user/admin)' }, { status: 400 });
       }
       const result = AdminDbService.updateUserRole(userId, role);
+      notifyDataChange('user_updated', { userId, role });
       return NextResponse.json(result);
     }
 
@@ -50,8 +53,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'ข้อมูลไม่ครบถ้วน (table, id, fields)' }, { status: 400 });
       }
       const updatedRow = AdminDbService.updateTableRow(table, id, fields);
+      notifyDataChange('db_updated', { table, id });
       return NextResponse.json({ message: 'บันทึกข้อมูลเรียบร้อยแล้ว', row: updatedRow });
     }
+
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {

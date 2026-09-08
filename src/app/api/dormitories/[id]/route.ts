@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DormitoryService } from '@/server/services/dormitoryService';
+import { notifyDataChange } from '@/server/events';
 
 export async function GET(
   request: NextRequest,
@@ -26,6 +27,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const updated = DormitoryService.updateDormitory(id, body);
+    notifyDataChange('dormitory_updated', { dormitoryId: id, dormitory: updated });
     return NextResponse.json({ message: 'แก้ไขข้อมูลหอพักสำเร็จ', dormitory: updated });
   } catch (error: any) {
     console.error('Error updating dormitory:', error);
@@ -40,8 +42,10 @@ export async function DELETE(
   try {
     const { id } = await params;
     DormitoryService.deleteDormitory(id);
+    notifyDataChange('dormitory_updated', { dormitoryId: id });
     return NextResponse.json({ message: 'ลบหอพักและข้อมูลห้องพักเรียบร้อยแล้ว' });
   } catch (error: any) {
+
     console.error('Error deleting dormitory:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 400 });
   }

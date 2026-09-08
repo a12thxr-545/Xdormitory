@@ -170,24 +170,24 @@ export default function BookingModal({
 
         {/* Step Indicator (Steps 1 to 3) */}
         {step < 4 && (
-          <div className="px-6 py-3 bg-slate-50 border-b border-slate-100">
-            <div className="flex items-center justify-between text-xs font-medium">
-              <div className={`flex items-center gap-1.5 ${step >= 1 ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 1 ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
+          <div className="px-4 sm:px-6 py-3 bg-slate-50 border-b border-slate-100 overflow-x-auto">
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-medium min-w-[280px]">
+              <div className={`flex items-center gap-1.5 whitespace-nowrap ${step >= 1 ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 1 ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
                   1
                 </span>
                 <span>เลือกวันเข้าพัก</span>
               </div>
-              <div className="h-0.5 w-8 bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 2 ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 2 ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
+              <div className="h-0.5 w-4 sm:w-8 bg-slate-200 shrink-0" />
+              <div className={`flex items-center gap-1.5 whitespace-nowrap ${step >= 2 ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 2 ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
                   2
                 </span>
                 <span>ข้อมูลผู้จอง</span>
               </div>
-              <div className="h-0.5 w-8 bg-slate-200" />
-              <div className={`flex items-center gap-1.5 ${step >= 3 ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 3 ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
+              <div className="h-0.5 w-4 sm:w-8 bg-slate-200 shrink-0" />
+              <div className={`flex items-center gap-1.5 whitespace-nowrap ${step >= 3 ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${step >= 3 ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
                   3
                 </span>
                 <span>ตรวจสอบ & ยืนยัน</span>
@@ -195,6 +195,7 @@ export default function BookingModal({
             </div>
           </div>
         )}
+
 
         {/* Error Alert */}
         {error && (

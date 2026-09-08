@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RoomService } from '@/server/services/roomService';
+import { notifyDataChange } from '@/server/events';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,8 +19,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const newRoom = RoomService.createRoom(body);
+    notifyDataChange('room_updated', { room: newRoom });
     return NextResponse.json({ message: 'เพิ่มห้องพักสำเร็จ', room: newRoom }, { status: 201 });
   } catch (error: any) {
+
     console.error('Error in POST /api/rooms:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 400 });
   }

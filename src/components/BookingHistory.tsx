@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Booking, User } from '@/types';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import {
   CalendarCheck,
   Building,
@@ -27,6 +28,43 @@ export default function BookingHistory({ currentUser, onExploreClick }: BookingH
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [actionMsg, setActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const showMsg = (type: 'success' | 'error', text: string) => {
+    setActionMsg({ type, text });
+    setTimeout(() => setActionMsg(null), 4000);
+  };
+
+  const handleCancelUserBooking = async (bookingId: string) => {
+    if (!confirm('คุณต้องการยกเลิกการจองนี้ใช่หรือไม่? (การยกเลิกภายใน 24 ชม. จะปลดล็อคห้องพักให้อัตโนมัติ)')) {
+      return;
+    }
+
+    setCancellingId(bookingId);
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'cancelled',
+          isUserCancel: true,
+          cancelReason: 'ผู้เช่ายกเลิกการจองเองภายใน 24 ชม.',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ยกเลิกการจองไม่สำเร็จ');
+
+      showMsg('success', 'ยกเลิกการจองเรียบร้อยแล้ว ห้องพักถูกปล่อยว่างแล้ว');
+      fetchBookings();
+    } catch (err: any) {
+      showMsg('error', err.message);
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -48,6 +86,14 @@ export default function BookingHistory({ currentUser, onExploreClick }: BookingH
     fetchBookings();
   }, [currentUser]);
 
+  // Realtime subscription for user booking updates
+  useRealtimeSync((event) => {
+    if (event.type !== 'poll') {
+      fetchBookings();
+    }
+  });
+
+
   const copyId = (id: string) => {
     navigator.clipboard.writeText(id);
     setCopiedId(id);
@@ -66,7 +112,7 @@ export default function BookingHistory({ currentUser, onExploreClick }: BookingH
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Header section */}
       <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -100,6 +146,25 @@ export default function BookingHistory({ currentUser, onExploreClick }: BookingH
           </button>
         </div>
       </div>
+
+      {/* Global Action Message */}
+      {actionMsg && (
+        <div
+          className={`p-3.5 rounded-xl text-xs flex items-center gap-2.5 shadow-xs animate-in fade-in ${
+            actionMsg.type === 'success'
+              ? 'bg-slate-900 text-white border border-slate-800'
+              : 'bg-slate-100 text-slate-800 border border-slate-300'
+          }`}
+        >
+          {actionMsg.type === 'success' ? (
+            <Check className="w-4 h-4 text-white shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-slate-700 shrink-0" />
+          )}
+          <span>{actionMsg.text}</span>
+        </div>
+      )}
+
 
       {/* Search Bar for user bookings */}
       {bookings.length > 0 && (
@@ -250,9 +315,53 @@ export default function BookingHistory({ currentUser, onExploreClick }: BookingH
                     <strong>เหตุผลที่ยกเลิก:</strong> {booking.cancelReason}
                   </div>
                 )}
+
+                {/* 24-Hour Cancellation Action Footer */}
+                {(() => {
+                  const createdTime = new Date(booking.createdAt).getTime();
+                  const nowTime = Date.now();
+                  const hoursPassed = (nowTime - createdTime) / (1000 * 60 * 60);
+                  const canUserCancel = booking.status === 'pending' && hoursPassed <= 24;
+                  const hoursLeft = Math.max(1, Math.ceil(24 - hoursPassed));
+
+                  if (isCancelled) return null;
+
+                  return (
+                    <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      {canUserCancel ? (
+                        <>
+                          <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+                            <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <span>สามารถยกเลิกได้ฟรีภายใน 24 ชม. (เหลือเวลาอีกประมาณ {hoursLeft} ชม.)</span>
+                          </div>
+                          <button
+                            onClick={() => handleCancelUserBooking(booking.id)}
+                            disabled={cancellingId === booking.id}
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold border border-slate-300 transition-all cursor-pointer inline-flex items-center gap-1.5 w-fit shrink-0 disabled:opacity-50"
+                          >
+                            {cancellingId === booking.id ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-700" />
+                            ) : (
+                              <XCircle className="w-3.5 h-3.5 text-slate-700" />
+                            )}
+                            <span>ยกเลิกการจอง</span>
+                          </button>
+                        </>
+                      ) : (
+                        <div className="text-slate-400 text-[11px]">
+                          {isConfirmed
+                            ? '*(รายการจองได้รับการอนุมัติจากผู้ดูแลหอพักแล้ว หากต้องการยกเลิกกรุณาติดต่อผู้ดูแลหอพัก)*'
+                            : '*(เกินกำหนด 24 ชั่วโมงหลังจองแล้ว ไม่สามารถยกเลิกเองได้ หากต้องการยกเลิกกรุณาติดต่อผู้ดูแลหอพัก)*'}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
               </div>
             );
           })}
+
         </div>
       )}
     </div>

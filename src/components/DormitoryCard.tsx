@@ -38,23 +38,24 @@ export default function DormitoryCard({ dormitory, onSelect }: DormitoryCardProp
           )}
         </div>
 
-        {/* Price Tag Badge */}
-        <div className="absolute bottom-4 right-4 text-right">
-          <span className="text-xs text-slate-300 font-medium block">เริ่มต้น</span>
-          <span className="text-xl sm:text-2xl font-bold text-white drop-shadow-md">
-            ฿{dormitory.minPrice ? dormitory.minPrice.toLocaleString() : '—'}
-            <span className="text-xs font-normal text-slate-300"> /เดือน</span>
-          </span>
-        </div>
+        {/* Gradient overlay & Content Info */}
+        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950/90 via-slate-950/60 to-transparent flex flex-col justify-end gap-1.5">
+          <div className="flex items-end justify-between gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-white leading-tight drop-shadow-md line-clamp-1 flex-1 min-w-0">
+              {dormitory.name}
+            </h3>
+            <div className="text-right shrink-0">
+              <span className="text-[10px] sm:text-xs text-slate-300 font-medium block leading-none">เริ่มต้น</span>
+              <span className="text-base sm:text-xl font-bold text-white drop-shadow-md leading-tight">
+                ฿{dormitory.minPrice ? dormitory.minPrice.toLocaleString() : '—'}
+                <span className="text-xs font-normal text-slate-300"> /เดือน</span>
+              </span>
+            </div>
+          </div>
 
-        {/* Address snippet overlay */}
-        <div className="absolute bottom-4 left-4 max-w-[65%]">
-          <h3 className="text-lg font-bold text-white leading-tight drop-shadow-md line-clamp-1">
-            {dormitory.name}
-          </h3>
-          <p className="text-xs text-slate-300 flex items-center gap-1 mt-1 drop-shadow-xs line-clamp-1">
+          <p className="text-xs text-slate-300 flex items-center gap-1 drop-shadow-xs truncate">
             <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            {dormitory.address}
+            <span className="truncate">{dormitory.address}</span>
           </p>
         </div>
       </div>

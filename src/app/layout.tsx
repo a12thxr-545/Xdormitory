@@ -30,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={`${prompt.variable} ${inter.variable}`}>
-      <body className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased selection:bg-slate-900 selection:text-white">
+    <html lang="th" className={`${prompt.variable} ${inter.variable} overflow-x-hidden max-w-full`}>
+      <body className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased selection:bg-slate-900 selection:text-white overflow-x-hidden max-w-full">
         {children}
       </body>
     </html>
