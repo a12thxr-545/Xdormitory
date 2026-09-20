@@ -6,7 +6,7 @@ export interface User {
   password?: string;
   phone: string;
   idCard?: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'staff';
   authProvider?: 'local' | 'google' | 'line';
   avatarUrl?: string;
   createdAt: string;

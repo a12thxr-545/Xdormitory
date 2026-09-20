@@ -109,9 +109,10 @@ export function initTables(db: Database.Database) {
   try { db.exec(`ALTER TABLE users ADD COLUMN authProvider TEXT DEFAULT 'local';`); } catch {}
   try { db.exec(`ALTER TABLE users ADD COLUMN avatarUrl TEXT;`); } catch {}
 
-  // Auto-populate default usernames
+  // Auto-populate default usernames & migrate admin to staff
   try {
-    db.exec(`UPDATE users SET username = 'admin' WHERE (email = 'admin@xdormitory.com' OR role = 'admin') AND (username IS NULL OR username = '');`);
+    db.exec(`UPDATE users SET role = 'staff' WHERE role = 'admin';`);
+    db.exec(`UPDATE users SET username = 'admin' WHERE (email = 'admin@xdormitory.com' OR role = 'staff') AND (username IS NULL OR username = '');`);
     db.exec(`UPDATE users SET username = 'user' WHERE (email = 'user@xdormitory.com') AND (username IS NULL OR username = '');`);
   } catch {}
 }
@@ -158,12 +159,12 @@ export function reseedDatabase(db: Database.Database) {
   insertUser.run({
     id: 'usr_admin1',
     username: 'admin',
-    name: 'คุณสมชาย มั่งคั่ง (เจ้าของหอพัก / ผู้ดูแล)',
+    name: 'คุณสมชาย มั่งคั่ง (พนักงาน / ผู้ดูแล)',
     email: 'admin@xdormitory.com',
     password: 'adminpassword',
     phone: '089-987-6543',
     idCard: '3-1005-98765-43-2',
-    role: 'admin',
+    role: 'staff',
     authProvider: 'local',
     avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80',
     createdAt: now,

@@ -258,7 +258,7 @@ export default function HomePage() {
               {authChecked && currentUser ? (
                 // LOGGED IN USER STATE (Desktop)
                 <div className="hidden md:flex items-center gap-2">
-                  {currentUser.role === 'admin' && (
+                  {currentUser.role === 'staff' && (
                     <Link
                       href="/admin"
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors shadow-2xs"
@@ -274,7 +274,7 @@ export default function HomePage() {
                     title="แก้ไขข้อมูลส่วนตัว"
                   >
                     <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs">
-                      {currentUser.role === 'admin' ? 'A' : 'U'}
+                      {currentUser.role === 'staff' ? 'S' : 'U'}
                     </div>
                     <span className="max-w-[120px] truncate">
                       {currentUser.name}
@@ -368,14 +368,14 @@ export default function HomePage() {
                 </button>
               )}
 
-              {currentUser?.role === 'admin' && (
+              {currentUser?.role === 'staff' && (
                 <Link
                   href="/admin"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200"
                 >
                   <ShieldCheck className="w-4 h-4 text-slate-700" />
-                  <span>Admin Portal (ระบบผู้ดูแล)</span>
+                  <span>Admin Portal (ระบบพนักงาน)</span>
                 </Link>
               )}
             </div>
@@ -387,7 +387,7 @@ export default function HomePage() {
                   <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
-                        {currentUser.role === 'admin' ? 'A' : 'U'}
+                        {currentUser.role === 'staff' ? 'S' : 'U'}
                       </div>
                       <div className="text-xs">
                         <span className="font-bold text-slate-900 block">{currentUser.name}</span>

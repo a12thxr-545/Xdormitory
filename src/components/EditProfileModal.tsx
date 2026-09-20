@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types';
-import { X, Check, UserCircle, Phone, Mail, CreditCard, AlertCircle } from 'lucide-react';
+import { X, Check, UserCircle, Mail, AlertCircle } from 'lucide-react';
 
 interface EditProfileModalProps {
   isOpen: boolean;

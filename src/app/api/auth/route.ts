@@ -9,8 +9,8 @@ export async function GET(request: NextRequest) {
     let user = null;
     if (userId) {
       user = AuthService.getUserById(userId);
-    } else if (roleParam === 'admin') {
-      user = AuthService.getUserByRole('admin');
+    } else if (roleParam === 'staff') {
+      user = AuthService.getUserByRole('staff');
     } else {
       user = AuthService.getUserByRole('user');
     }

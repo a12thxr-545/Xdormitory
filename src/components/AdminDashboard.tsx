@@ -324,7 +324,7 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
   // -------------------------------------------------------------
   const handleUpdateBookingStatus = async (bookingId: string, status: 'confirmed' | 'cancelled') => {
     const actionLabel = status === 'confirmed' ? 'ยืนยันการจอง' : 'ยกเลิกการจอง';
-    const cancelReason = status === 'cancelled' ? 'ยกเลิกโดยเจ้าของหอพัก / ผู้ดูแล (ห้องพักถูกปลดล็อคแล้ว)' : '';
+    const cancelReason = status === 'cancelled' ? 'ยกเลิกโดยพนักงาน / ผู้ดูแล (ห้องพักถูกปลดล็อคแล้ว)' : '';
 
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
@@ -555,46 +555,50 @@ export default function AdminDashboard({ onRefreshAll }: AdminDashboardProps) {
             </div>
 
             {/* Status Filter Buttons */}
-            <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto text-xs">
+            <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto text-xs py-0.5">
               <button
                 onClick={() => setBookingStatusFilter('all')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-xl font-medium whitespace-nowrap transition-all flex items-center justify-center gap-1.5 min-h-[38px] shrink-0 cursor-pointer ${
                   bookingStatusFilter === 'all'
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-slate-900 text-white shadow-2xs font-semibold'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                ทั้งหมด ({bookings.length})
+                <span>ทั้งหมด</span>
+                <span className="text-[11px] opacity-80">({bookings.length})</span>
               </button>
               <button
                 onClick={() => setBookingStatusFilter('pending')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-xl font-medium whitespace-nowrap transition-all flex items-center justify-center gap-1.5 min-h-[38px] shrink-0 cursor-pointer ${
                   bookingStatusFilter === 'pending'
-                    ? 'bg-slate-900 text-white shadow-2xs'
+                    ? 'bg-slate-900 text-white shadow-2xs font-semibold'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                รออนุมัติ ({bookings.filter((b) => b.status === 'pending').length})
+                <span>รออนุมัติ</span>
+                <span className="text-[11px] opacity-80">({bookings.filter((b) => b.status === 'pending').length})</span>
               </button>
               <button
                 onClick={() => setBookingStatusFilter('confirmed')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-xl font-medium whitespace-nowrap transition-all flex items-center justify-center gap-1.5 min-h-[38px] shrink-0 cursor-pointer ${
                   bookingStatusFilter === 'confirmed'
-                    ? 'bg-slate-900 text-white shadow-2xs'
+                    ? 'bg-slate-900 text-white shadow-2xs font-semibold'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                ยืนยันแล้ว ({bookings.filter((b) => b.status === 'confirmed').length})
+                <span>ยืนยันแล้ว</span>
+                <span className="text-[11px] opacity-80">({bookings.filter((b) => b.status === 'confirmed').length})</span>
               </button>
               <button
                 onClick={() => setBookingStatusFilter('cancelled')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3.5 py-2 rounded-xl font-medium whitespace-nowrap transition-all flex items-center justify-center gap-1.5 min-h-[38px] shrink-0 cursor-pointer ${
                   bookingStatusFilter === 'cancelled'
-                    ? 'bg-slate-900 text-white shadow-2xs'
+                    ? 'bg-slate-900 text-white shadow-2xs font-semibold'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                ยกเลิก ({bookings.filter((b) => b.status === 'cancelled').length})
+                <span>ยกเลิก</span>
+                <span className="text-[11px] opacity-80">({bookings.filter((b) => b.status === 'cancelled').length})</span>
               </button>
             </div>
           </div>

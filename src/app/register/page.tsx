@@ -20,6 +20,32 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!name.trim()) {
+      setError('กรุณากรอกชื่อ - นามสกุล');
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('กรุณากรอกอีเมล');
+      return;
+    }
+
+    if (!password) {
+      setError('กรุณากรอกรหัสผ่าน');
+      return;
+    }
+
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
+      setError('รหัสผ่านต้องมีทั้งตัวอักษรพิมพ์เล็ก (a-z) และตัวอักษรพิมพ์ใหญ่ (A-Z)');
+      return;
+    }
+
+    if (!phone.trim()) {
+      setError('กรุณากรอกเบอร์โทรศัพท์ติดต่อ');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -79,7 +105,7 @@ export default function RegisterPage() {
           <div className="mb-5 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-800 flex items-start gap-2">
             <Shield className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
             <span>
-              การสมัครสมาชิกนี้เป็น<strong>บัญชีผู้เช่า (Tenant)</strong> เท่านั้น สำหรับสิทธิ์ <strong>เจ้าของหอพัก / Admin</strong> จะต้องได้รับการแต่งตั้งผ่านระบบหลังบ้าน (Database)
+              การสมัครสมาชิกนี้เป็น<strong>บัญชีผู้เช่า (Tenant)</strong> เท่านั้น สำหรับสิทธิ์ <strong>พนักงาน / Staff</strong> จะต้องได้รับการแต่งตั้งผ่านระบบหลังบ้าน (Database)
             </span>
           </div>
 
@@ -146,6 +172,9 @@ export default function RegisterPage() {
                 placeholder="••••••••"
                 className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-slate-900 transition-all"
               />
+              <p className="mt-1 text-[11px] text-slate-500">
+                * ต้องประกอบด้วยตัวอักษรพิมพ์เล็ก (a-z) และพิมพ์ใหญ่ (A-Z)
+              </p>
             </div>
 
             <div>

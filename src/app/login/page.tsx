@@ -42,7 +42,7 @@ export default function LoginPage() {
       localStorage.setItem('xdorm_user', JSON.stringify(data.user));
 
       // Route according to the role defined in the database/backoffice!
-      if (data.user.role === 'admin') {
+      if (data.user.role === 'staff') {
         router.push('/admin');
       } else {
         router.push('/');

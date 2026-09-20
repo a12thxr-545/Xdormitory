@@ -98,7 +98,7 @@ export default function DiagramInfoBanner() {
           <div className="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-2">
             <div className="font-bold text-amber-300 flex items-center gap-1.5 text-sm">
               <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>เจ้าของหอพัก / Admin</span>
+              <span>พนักงาน / Staff</span>
             </div>
             <ul className="space-y-1.5 text-slate-300">
               <li className="flex items-center gap-1.5">

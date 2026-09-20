@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { User as UserIcon, ShieldCheck, LogIn, LogOut, Edit3, CalendarCheck, Home, RotateCcw } from 'lucide-react';
 import { clearAppCache } from '@/lib/cacheUtils';
@@ -13,7 +12,7 @@ interface NavbarProps {
   setActiveTab: (tab: 'explore' | 'history' | 'admin') => void;
   onOpenAuth: () => void;
   onOpenProfile: () => void;
-  onSwitchRole: (role: 'user' | 'admin') => void;
+  onSwitchRole: (role: 'user' | 'staff') => void;
   onLogout: () => void;
 }
 
@@ -95,7 +94,7 @@ export default function Navbar({
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
-              แดชบอร์ดเจ้าของหอพัก (Admin)
+              แดชบอร์ดพนักงาน (Staff)
             </button>
           </nav>
 
@@ -117,15 +116,15 @@ export default function Navbar({
                 <span>ผู้เช่า</span>
               </button>
               <button
-                onClick={() => onSwitchRole('admin')}
+                onClick={() => onSwitchRole('staff')}
                 className={`px-2 py-0.5 rounded-md font-medium transition-colors flex items-center gap-1 ${
-                  currentUser?.role === 'admin'
+                  currentUser?.role === 'staff'
                     ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <ShieldCheck className="w-3 h-3" />
-                <span>เจ้าของหอ</span>
+                <span>พนักงาน</span>
               </button>
             </div>
 
@@ -151,7 +150,7 @@ export default function Navbar({
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs sm:text-sm font-medium transition-colors"
                 >
                   <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs">
-                    {currentUser.role === 'admin' ? 'A' : 'U'}
+                    {currentUser.role === 'staff' ? 'S' : 'U'}
                   </div>
                   <span className="hidden sm:inline max-w-[120px] truncate">{currentUser.name}</span>
                   <Edit3 className="w-3.5 h-3.5 text-slate-400" />

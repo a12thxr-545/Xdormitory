@@ -193,25 +193,7 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
     }
   };
 
-  // Quick 1-Click Role Changer
-  const handleChangeUserRole = async (userId: string, targetRole: 'admin' | 'user') => {
-    try {
-      const res = await fetch('/api/admin/db', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'changeRole', userId, role: targetRole }),
-      });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'เปลี่ยนสิทธิ์ไม่สำเร็จ');
-
-      showMsg('success', data.message || `เปลี่ยนสิทธิ์เป็น ${targetRole} สำเร็จแล้ว`);
-      fetchTableRows('users');
-      fetchStats();
-    } catch (err: any) {
-      showMsg('error', err.message);
-    }
-  };
 
   // Quick 1-Click Cell Value Updater (Edit & Change Immediately)
   const handleQuickUpdateRow = async (table: string, id: string, fields: Record<string, any>) => {
@@ -493,23 +475,7 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
                         <span>แก้ไข</span>
                       </button>
 
-                      {activeTable === 'users' && (
-                        row.role === 'admin' ? (
-                          <button
-                            onClick={() => handleChangeUserRole(row.id, 'user')}
-                            className="px-2 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium transition-colors cursor-pointer"
-                          >
-                            ลดสิทธิ์
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleChangeUserRole(row.id, 'admin')}
-                            className="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-medium transition-colors cursor-pointer"
-                          >
-                            ตั้ง Admin
-                          </button>
-                        )
-                      )}
+                      {/* Quick 1-Click Role Changer removed per policy */}
                     </div>
                   </div>
 
@@ -524,14 +490,9 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
                           </span>
                           <div className="mt-0.5 truncate text-slate-800 font-medium">
                             {k === 'role' ? (
-                              <select
-                                value={val}
-                                onChange={(e) => handleQuickUpdateRow('users', row.id, { role: e.target.value })}
-                                className="w-full px-2 py-0.5 rounded text-xs font-medium border border-slate-200 bg-slate-50 text-slate-900 cursor-pointer"
-                              >
-                                <option value="user">user (ผู้เช่า)</option>
-                                <option value="admin">admin (ผู้ดูแล)</option>
-                              </select>
+                              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-slate-100 border border-slate-200 text-slate-800 font-sans">
+                                {val === 'staff' ? 'staff (พนักงาน)' : 'user (ผู้เช่า)'}
+                              </span>
                             ) : k === 'status' && activeTable === 'rooms' ? (
                               <select
                                 value={val}
@@ -595,41 +556,16 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
                           <span>แก้ไข</span>
                         </button>
 
-                        {/* Quick 1-Click Role Toggle for Users */}
-                        {activeTable === 'users' && (
-                          row.role === 'admin' ? (
-                            <button
-                              onClick={() => handleChangeUserRole(row.id, 'user')}
-                              className="px-2 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-[11px] font-sans font-medium transition-colors cursor-pointer"
-                              title="ลดสิทธิ์เป็นผู้เช่า"
-                            >
-                              ลดสิทธิ์
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleChangeUserRole(row.id, 'admin')}
-                              className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-[11px] font-sans font-medium transition-colors cursor-pointer"
-                              title="แต่งตั้งเป็น Admin"
-                            >
-                              ตั้งเป็น Admin
-                            </button>
-                          )
-                        )}
+                        {/* Quick role changer buttons removed per policy */}
                       </td>
 
                       {/* Table Data Columns */}
                       {Object.entries(row).map(([k, val]: [string, any], vIdx) => (
                         <td key={vIdx} className="px-4 py-2 whitespace-nowrap max-w-xs truncate text-slate-700">
                           {k === 'role' ? (
-                            <select
-                              value={val}
-                              onChange={(e) => handleQuickUpdateRow('users', row.id, { role: e.target.value })}
-                              className="px-2 py-0.5 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-800 font-sans cursor-pointer hover:border-slate-300 transition-colors"
-                              title="คลิกเพื่อเปลี่ยนสิทธิ์ทันที"
-                            >
-                              <option value="user">user (ผู้เช่า)</option>
-                              <option value="admin">admin (ผู้ดูแล)</option>
-                            </select>
+                            <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 border border-slate-200 text-slate-800 font-sans">
+                              {val === 'staff' ? 'staff (พนักงาน)' : 'user (ผู้เช่า)'}
+                            </span>
                           ) : k === 'status' && activeTable === 'rooms' ? (
                             <select
                               value={val}
@@ -706,19 +642,15 @@ export default function DatabaseManager({ onDataReset }: DatabaseManagerProps) {
                 // Special dropdown for Role
                 if (field === 'role') {
                   return (
-                    <div key={field} className="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-                      <label className="flex items-center gap-1.5 font-bold text-slate-900 mb-1">
+                    <div key={field} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                      <label className="flex items-center gap-1.5 font-bold text-slate-900 mb-1.5 text-xs">
                         <Shield className="w-3.5 h-3.5 text-slate-700" />
                         <span>สิทธิ์ผู้ใช้งาน (Role)</span>
+                        <span className="text-[10px] text-slate-500 font-normal">(อ่านอย่างเดียว - เปลี่ยนสิทธิ์ผ่าน DB เท่านั้น)</span>
                       </label>
-                      <select
-                        value={val || 'user'}
-                        onChange={(e) => setEditFormData({ ...editFormData, [field]: e.target.value })}
-                        className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-300 bg-white font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-slate-900"
-                      >
-                        <option value="user">ผู้เช่า / นักศึกษา (User)</option>
-                        <option value="admin">เจ้าของหอพัก / ผู้ดูแล (Admin)</option>
-                      </select>
+                      <div className="w-full px-3.5 py-2 text-xs font-mono font-semibold rounded-xl border border-slate-200 bg-white text-slate-800">
+                        {val === 'staff' ? 'staff (พนักงาน / ผู้ดูแล)' : 'user (ผู้เช่า / นักศึกษา)'}
+                      </div>
                     </div>
                   );
                 }

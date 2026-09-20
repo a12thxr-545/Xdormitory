@@ -115,12 +115,12 @@ function seedData(db: Database.Database) {
 
   insertUser.run({
     id: 'usr_admin1',
-    name: 'คุณสมชาย มั่งคั่ง (เจ้าของหอพัก / ผู้ดูแล)',
+    name: 'คุณสมชาย มั่งคั่ง (พนักงาน / ผู้ดูแล)',
     email: 'admin@xdormitory.com',
     password: 'adminpassword',
     phone: '089-987-6543',
     idCard: '3-1005-98765-43-2',
-    role: 'admin',
+    role: 'staff',
     createdAt: now
   });
 

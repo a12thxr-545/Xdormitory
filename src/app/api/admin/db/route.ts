@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
 
     if (action === 'changeRole') {
       const { userId, role } = body;
-      if (!userId || !['user', 'admin'].includes(role)) {
-        return NextResponse.json({ error: 'ข้อมูลไม่ครบถ้วน (userId, role: user/admin)' }, { status: 400 });
+      if (!userId || !['user', 'staff'].includes(role)) {
+        return NextResponse.json({ error: 'ข้อมูลไม่ครบถ้วน (userId, role: user/staff)' }, { status: 400 });
       }
       const result = AdminDbService.updateUserRole(userId, role);
       notifyDataChange('user_updated', { userId, role });

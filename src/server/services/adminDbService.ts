@@ -105,7 +105,7 @@ export class AdminDbService {
     };
   }
 
-  static updateUserRole(userId: string, newRole: 'admin' | 'user') {
+  static updateUserRole(userId: string, newRole: 'staff' | 'user') {
     const db = getDb();
     const user = db.prepare('SELECT id, name, email, role FROM users WHERE id = ?').get(userId) as any;
     if (!user) throw new Error('ไม่พบบัญชีผู้ใช้งาน');
@@ -113,10 +113,10 @@ export class AdminDbService {
     db.prepare('UPDATE users SET role = ? WHERE id = ?').run(newRole, userId);
     try {
       db.pragma('wal_checkpoint(PASSIVE)');
-    } catch (e) {}
+    } catch {}
 
     return {
-      message: `เปลี่ยนสิทธิ์ผู้ใช้ "${user.name}" (${user.email}) เป็น "${newRole === 'admin' ? 'เจ้าของหอพัก / Admin' : 'ผู้เช่า (User)'}" เรียบร้อยแล้ว`,
+      message: `เปลี่ยนสิทธิ์ผู้ใช้ "${user.name}" (${user.email}) เป็น "${newRole === 'staff' ? 'พนักงาน / Staff' : 'ผู้เช่า (User)'}" เรียบร้อยแล้ว`,
       userId,
       newRole,
     };
@@ -127,7 +127,7 @@ export class AdminDbService {
     const allowed = ['users', 'dormitories', 'rooms', 'bookings'];
     if (!allowed.includes(tableName)) throw new Error('ตารางไม่ถูกต้อง');
 
-    const keys = Object.keys(fields).filter((k) => k !== 'id');
+    const keys = Object.keys(fields).filter((k) => k !== 'id' && (tableName !== 'users' || k !== 'role'));
     if (keys.length === 0) throw new Error('ไม่มีข้อมูลที่ต้องการอัปเดต');
 
     const setClause = keys.map((k) => `${k} = ?`).join(', ');

@@ -169,7 +169,7 @@ export class BookingService {
       } else if (status === 'cancelled') {
         db.prepare("UPDATE bookings SET status = 'cancelled', cancelledAt = ?, cancelReason = ? WHERE id = ?").run(
           now,
-          cancelReason || 'ยกเลิกโดยเจ้าของหอพัก / ผู้ดูแล',
+          cancelReason || 'ยกเลิกโดยพนักงาน / ผู้ดูแล',
           id
         );
         // Automatically release room back to available!
@@ -184,17 +184,13 @@ export class BookingService {
     return this.getBookingById(id)!;
   }
 
-  static cancelBookingByUser(id: string, cancelReason?: string): void {
+  static cancelBookingByUser(id: string, _cancelReason?: string): void {
     const db = getDb();
     const booking = db.prepare('SELECT * FROM bookings WHERE id = ?').get(id) as any;
     if (!booking) throw new Error('ไม่พบข้อมูลการจอง');
 
-    if (booking.status === 'confirmed') {
-      throw new Error('ไม่สามารถยกเลิกการจองได้ เนื่องจากรายการจองได้รับการอนุมัติจากผู้ดูแลหอพักแล้ว');
-    }
-
-    if (booking.status === 'cancelled') {
-      throw new Error('รายการจองนี้ถูกยกเลิกไปแล้ว');
+    if (booking.status !== 'pending') {
+      throw new Error('ผู้เช่าสามารถยกเลิกการจองได้เฉพาะรายการที่ยังไม่อนุมัติเท่านั้น (สถานะ Pending)');
     }
 
     const createdTime = new Date(booking.createdAt).getTime();

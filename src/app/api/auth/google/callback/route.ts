@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 4. Return HTML that stores user into localStorage and redirects
-    const targetUrl = user.role === 'admin' ? '/admin' : '/';
+    const targetUrl = user.role === 'staff' ? '/admin' : '/';
     const userJson = JSON.stringify(user).replace(/</g, '\\u003c');
 
     const html = `

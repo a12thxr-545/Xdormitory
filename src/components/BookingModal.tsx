@@ -424,7 +424,7 @@ export default function BookingModal({
                   จองห้องพักสำเร็จแล้ว
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  ระบบได้สร้างรหัสการจองและแจ้งเตือนไปยังเจ้าของหอพักเรียบร้อยแล้ว
+                  ระบบได้สร้างรหัสการจองและแจ้งเตือนไปยังพนักงานเรียบร้อยแล้ว
                 </p>
               </div>
 
@@ -453,7 +453,7 @@ export default function BookingModal({
                 <p><strong>หอพัก:</strong> {dormitory.name}</p>
                 <p><strong>ห้อง:</strong> {room.roomNumber} • <strong>วันเข้าพัก:</strong> {createdBooking.checkInDate}</p>
                 <p className="mt-1 text-slate-800 font-medium">
-                  สถานะ: รอการยืนยันจากเจ้าของหอพัก (Pending)
+                  สถานะ: รอการยืนยันจากพนักงาน (Pending)
                 </p>
               </div>
             </div>

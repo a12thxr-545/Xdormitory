@@ -8,7 +8,7 @@ export class AuthService {
     return user || null;
   }
 
-  static getUserByRole(role: 'user' | 'admin'): User | null {
+  static getUserByRole(role: 'user' | 'staff'): User | null {
     const db = getDb();
     const user = db.prepare('SELECT id, username, name, email, phone, idCard, role, authProvider, avatarUrl, createdAt FROM users WHERE role = ? LIMIT 1').get(role) as User | undefined;
     return user || null;
@@ -48,7 +48,7 @@ export class AuthService {
     const normalizedEmail = (email || `${provider}_${socialId || Date.now()}@xdormitory.com`).toLowerCase().trim();
     
     // Check if user already exists
-    let user = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(normalizedEmail) as any;
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(normalizedEmail) as any;
 
     if (user) {
       if (avatarUrl && !user.avatarUrl) {
@@ -92,15 +92,31 @@ export class AuthService {
     password: string;
     phone: string;
     idCard?: string;
-    role?: 'user' | 'admin';
+    role?: 'user' | 'staff';
   }): User {
     const db = getDb();
     const { name, username: rawUsername, email, password, phone, idCard = '' } = data;
     // Public registration always assigns 'user' role. Admin role must be granted from backoffice only!
     const role = 'user';
 
-    if (!name || !email || !password || !phone) {
-      throw new Error('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+    if (!name || !name.trim()) {
+      throw new Error('กรุณากรอกชื่อ - นามสกุล');
+    }
+
+    if (!email || !email.trim()) {
+      throw new Error('กรุณากรอกอีเมล');
+    }
+
+    if (!password) {
+      throw new Error('กรุณากรอกรหัสผ่าน');
+    }
+
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
+      throw new Error('รหัสผ่านต้องมีทั้งตัวอักษรพิมพ์เล็ก (a-z) และตัวอักษรพิมพ์ใหญ่ (A-Z)');
+    }
+
+    if (!phone || !phone.trim()) {
+      throw new Error('กรุณากรอกเบอร์โทรศัพท์ติดต่อ');
     }
 
     const normalizedEmail = email.trim().toLowerCase();

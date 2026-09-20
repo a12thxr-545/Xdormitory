@@ -40,8 +40,8 @@ export default function AdminPortalPage() {
         console.error('Error parsing stored user', e);
       }
     } else {
-      // Default to admin for convenient local testing
-      fetch('/api/auth?role=admin')
+      // Default to staff for convenient local testing
+      fetch('/api/auth?role=staff')
         .then((res) => res.json())
         .then((data) => {
           if (data.user) {
@@ -69,8 +69,8 @@ export default function AdminPortalPage() {
     );
   }
 
-  // Access denied if not admin
-  if (!currentUser || currentUser.role !== 'admin') {
+  // Access denied if not staff
+  if (!currentUser || currentUser.role !== 'staff') {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4">
         <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-8 text-center space-y-6">
